@@ -14,12 +14,10 @@ export const usePost = defineStore('post', () => {
         data.value = {}
     }
 
-    async function post({title, body, user_id}) {
-        const payload = await $api.post('/posts', {
-            title,
-            body,
-            user_id,
-        })
+    async function post(fd, headers = {}) {
+        console.log('Posting new post')
+        console.log('fd: ', [...fd.entries()])
+        const payload = await $api.post('/posts', fd, headers)
 
         start(payload)
     }

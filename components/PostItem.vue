@@ -71,6 +71,7 @@ const isFollowingPost = computed(() => {
     <p>
       {{ post.body }}
     </p>
+    <img :src="post.image_url" v-show="post.image_url" class="rounded-lg max-h-96 object-cover w-full"/>
     <button class="bg-red-200 text-red-500 flex items-center justify-center gap-2 p-4 rounded-lg">
       <Favorite
           v-show="!isFollowingPost"
