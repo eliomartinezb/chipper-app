@@ -1,5 +1,6 @@
 <script setup>
-import {HeartIcon} from '@heroicons/vue/24/outline'
+import {HeartIcon as Favorite} from '@heroicons/vue/24/outline'
+import {HeartIcon as Favorited} from '@heroicons/vue/24/solid'
 import {useFavorite} from "../stores/favorite";
 import {storeToRefs} from 'pinia'
 
@@ -8,6 +9,8 @@ const {showErrorModal} = useHelpers()
 const emit = defineEmits(['follow'])
 
 const favorite = useFavorite()
+const user = useUser()
+const router = useRouter()
 
 const {data: favorites} = storeToRefs(favorite)
 
@@ -19,24 +22,36 @@ const {post} = defineProps({
 })
 
 const favoritePressed = (type) => {
-  try {
-    if (isFollowing.value) {
-      favorite.deleted(type, post.user.id)
-    } else {
-      favorite.post(type, post.user.id)
+  if (!user.isGuest) {
+    try {
+      let validation = isFollowingUser.value
+      let id = post.user.id
+      if (type === 'posts') {
+        validation = isFollowingPost.value
+        id = post.id
+      }
+      if (validation) {
+        favorite.deleted(type, id)
+      } else {
+        favorite.post(type, id)
+      }
+      emit('follow')
+    } catch (e) {
+      showErrorModal(e)
     }
-    emit('follow')
-  } catch (e) {
-    console.log("favoritePressed")
-    console.log("catch")
-    console.log(e)
-    showErrorModal(e)
+  } else {
+    router.push('/login')
   }
 }
 
-const isFollowing = computed(() => {
+const isFollowingUser = computed(() => {
   const users = favorites.value?.users ?? []
   return users.some(u => u.id === post.user.id)
+})
+
+const isFollowingPost = computed(() => {
+  const posts = favorites.value?.posts ?? []
+  return posts.some(u => u.id === post.id)
 })
 </script>
 
@@ -50,17 +65,21 @@ const isFollowing = computed(() => {
         by <strong>{{ post.user.name }}</strong>
       </div>
       <button class="font-medium bg-blue-200 text-sm px-2 rounded-full" @click="favoritePressed('users')">
-        {{ isFollowing ? 'Unfollow' : 'Follow' }}
+        {{ isFollowingUser ? 'Unfollow' : 'Follow' }}
       </button>
     </div>
     <p>
       {{ post.body }}
     </p>
     <button class="bg-red-200 text-red-500 flex items-center justify-center gap-2 p-4 rounded-lg">
-      <HeartIcon
+      <Favorite
+          v-show="!isFollowingPost"
           class="h-6 stroke-current"/>
-      <span class="font-bold">
-        Add to my favorites
+      <Favorited
+          v-show="isFollowingPost"
+          class="h-6 stroke-current"/>
+      <span class="font-bold" @click="favoritePressed('posts')">
+        {{ isFollowingPost ? 'Remove from favorites' : 'Add to my favorites' }}
       </span>
     </button>
   </div>
